@@ -19,13 +19,13 @@ namespace netCorePlayground.Controllers.Admin
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger) : base()
+        public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
             _logger = logger;
         }
 
         [HttpGet]
-        [Authorize(Policy = Policies.AdminPolicy)]
+        [Authorize(Policy = Policies.UserPolicy, Roles = Policies.AdminRole)]
         [Route("v1/list")]
         public IEnumerable<WeatherForecast> Get()
         {
@@ -33,12 +33,12 @@ namespace netCorePlayground.Controllers.Admin
 
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
+                {
+                    Date = DateTime.Now.AddDays(index),
+                    TemperatureC = rng.Next(-20, 55),
+                    Summary = Summaries[rng.Next(Summaries.Length)]
+                })
+                .ToArray();
         }
     }
 }

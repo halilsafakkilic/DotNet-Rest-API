@@ -19,14 +19,11 @@ namespace netCorePlayground.Controllers.User
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger) : base()
+        public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
             _logger = logger;
         }
 
-        /// <summary>
-        /// Must be required Authorization to read
-        /// </summary>
         [HttpGet]
         [Authorize(Policy = Policies.UserPolicy)]
         [Route("v1/list")]
@@ -34,29 +31,14 @@ namespace netCorePlayground.Controllers.User
         {
             _logger.LogDebug($"User route called.");
 
-            if (!User.CanView())
-            {
-                throw new UnauthorizedAccessException();
-            }
-
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
-
-        }
-
-        [HttpGet]
-        [Obsolete("Temporary time was added for trial")]
-        [Authorize(Policy = Policies.UserPolicy)]
-        [Route("v1.1-alpha/list")]
-        public IActionResult GetV11Alpha()
-        {
-            return NoContent();
+                {
+                    Date = DateTime.Now.AddDays(index),
+                    TemperatureC = rng.Next(-20, 55),
+                    Summary = Summaries[rng.Next(Summaries.Length)]
+                })
+                .ToArray();
         }
 
         /// <summary>
@@ -69,6 +51,20 @@ namespace netCorePlayground.Controllers.User
         public IEnumerable<WeatherForecast> GetV12()
         {
             return Get();
+        }
+
+        [HttpGet]
+        [Obsolete("Only for test users")]
+        [Authorize(Policy = Policies.UserPolicy)]
+        [Route("v1.3/list")]
+        public IActionResult GetV13()
+        {
+            if (!User.IsTesterUser())
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            return NoContent();
         }
     }
 }

@@ -7,6 +7,5 @@ namespace netCorePlayground.Controllers.Admin
     [Route("[area]")]
     public abstract class AdminController : ControllerBase
     {
-
     }
 }

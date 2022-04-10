@@ -41,9 +41,9 @@ namespace netCorePlayground
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidIssuer = Configuration["JwtConfig:Issuer"],
-                    ValidAudience = Configuration["JwtConfig:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtConfig:SecretKey"])),
+                    ValidIssuer = Configuration["Jwt:Issuer"],
+                    ValidAudience = Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:SecretKey"])),
                     ClockSkew = TimeSpan.Zero,
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -54,10 +54,10 @@ namespace netCorePlayground
 
             services.AddAuthorization((Action<Microsoft.AspNetCore.Authorization.AuthorizationOptions>)(config =>
             {
-                config.AddPolicy(Policies.ViewRole, Policies.ViewRoleGenerator());
-
-                config.AddPolicy(Policies.AdminPolicy, Policies.AdminPolicyGenerator());
                 config.AddPolicy(Policies.UserPolicy, Policies.UserPolicyGenerator());
+             
+                config.AddPolicy(Policies.AdminRole, Policies.AdminRoleGenerator());
+                config.AddPolicy(Policies.TesterUserRole, Policies.TesterUserRoleGenerator());
             }));
 
             services.AddSwaggerGen(c =>
@@ -69,7 +69,7 @@ namespace netCorePlayground
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer aBcDDE.MyToken\"",
+                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter your access token in the text input below.\r\n\r\nExample: \"Bearer aBcDDE.MyToken\"",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,

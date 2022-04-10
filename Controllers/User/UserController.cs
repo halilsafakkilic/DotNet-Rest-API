@@ -7,6 +7,5 @@ namespace netCorePlayground.Controllers.User
     [Route("[area]")]
     public abstract class UserController : ControllerBase
     {
-
     }
 }

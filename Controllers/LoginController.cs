@@ -10,9 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using netCorePlayground.DTOs;
-using netCorePlayground.Models;
 
-namespace JWTAuthenticationExample.Controllers
+namespace netCorePlayground.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -20,11 +19,25 @@ namespace JWTAuthenticationExample.Controllers
     {
         private readonly IConfiguration _config;
 
-        private IList<User> appUsers = new List<User>
+        private IList<Models.User> appUsers = new List<Models.User>
         {
-            new User { FullName = "Admin", UserName = "admin", Password = "1234", UserRoles = new List<string> { netCorePlayground.Infra.Policies.ViewRole, netCorePlayground.Infra.Policies.AdminPolicy } },
-            new User { FullName = "Guest", UserName = "guest", Password = "1234", UserRoles = new List<string> { netCorePlayground.Infra.Policies.UserPolicy } },
-            new User { FullName = "Client", UserName = "user", Password = "1234", UserRoles = new List<string> { netCorePlayground.Infra.Policies.ViewRole, netCorePlayground.Infra.Policies.UserPolicy } }
+            new Models.User
+            {
+                FullName = "Admin", UserName = "admin", Password = "1234",
+                UserRoles = new List<string>
+                    {Infra.Policies.UserPolicy, Infra.Policies.TesterUserRole, Infra.Policies.AdminRole}
+            },
+            new Models.User
+            {
+                FullName = "John Doe", UserName = "user", Password = "1234",
+                UserRoles = new List<string> {Infra.Policies.UserPolicy}
+            },
+            new Models.User
+            {
+                FullName = "Tester", UserName = "tester", Password = "1234",
+                UserRoles = new List<string>
+                    {Infra.Policies.UserPolicy, Infra.Policies.TesterUserRole}
+            },
         };
 
         public LoginController(IConfiguration config)
@@ -34,10 +47,10 @@ namespace JWTAuthenticationExample.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(LoginOutputDTO))]
+        [ProducesResponseType((int) HttpStatusCode.OK, Type = typeof(LoginOutputDTO))]
         public IActionResult Login([FromBody] LoginInputDTO login)
         {
-            User user = AuthenticateUser(login);
+            Models.User user = AuthenticateUser(login);
             if (user == null)
             {
                 return Unauthorized();
@@ -45,25 +58,26 @@ namespace JWTAuthenticationExample.Controllers
 
             return Ok(new LoginOutputDTO
             {
-                Token = GenerateJWTToken(user)
+                AccessToken = "Bearer " + GenerateJwtToken(user)
             });
         }
 
-        User AuthenticateUser(LoginInputDTO loginCredentials)
+        private Models.User AuthenticateUser(LoginInputDTO loginCredentials)
         {
-            User user = appUsers.SingleOrDefault(x => x.UserName == loginCredentials.UserName && x.Password == loginCredentials.Password);
+            Models.User user = appUsers.SingleOrDefault(x =>
+                x.UserName == loginCredentials.Username && x.Password == loginCredentials.Password);
 
             return user;
         }
 
-        string GenerateJWTToken(User userInfo)
+        private string GenerateJwtToken(Models.User userInfo)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userInfo.UserName),
-                new Claim(ClaimTypes.Name, userInfo.FullName.ToString()),
+                new Claim(ClaimTypes.Name, userInfo.FullName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
@@ -76,7 +90,7 @@ namespace JWTAuthenticationExample.Controllers
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddHours(4),
                 signingCredentials: credentials
             );
 

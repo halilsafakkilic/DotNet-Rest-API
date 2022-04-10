@@ -1,50 +1,53 @@
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using netCorePlayground.DTOs;
 using Newtonsoft.Json;
-using System;
 
-[Obsolete]
-public class ExceptionHandler
+namespace netCorePlayground.Middlewares
 {
-    private readonly IWebHostEnvironment _environment;
-
-    private const string DefaultErrorMessage = "A server error occurred.";
-
-    public ExceptionHandler(IWebHostEnvironment environment)
+    [Obsolete]
+    public class ExceptionHandler
     {
-        _environment = environment;
-    }
+        private readonly IWebHostEnvironment _environment;
 
-    public async Task Invoke(HttpContext httpContext)
-    {
-        httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        private const string DefaultErrorMessage = "A server error occurred.";
 
-        var ex = httpContext.Features.Get<IExceptionHandlerFeature>()?.Error;
-        if (ex == null)
+        public ExceptionHandler(IWebHostEnvironment environment)
         {
-            return;
+            _environment = environment;
         }
 
-        var error = new ApiError();
-        if (_environment.IsDevelopment())
+        public async Task Invoke(HttpContext httpContext)
         {
-            error.Message = ex.Message;
-            error.Detail = ex.StackTrace;
-            //error.InnerException = ex.InnerException != null ? ex.InnerException.Message : string.Empty;
-        }
-        else
-        {
-            error.Message = DefaultErrorMessage;
-            error.Detail = ex.Message;
-        }
+            httpContext.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
 
-        httpContext.Response.ContentType = "application/json";
+            var ex = httpContext.Features.Get<IExceptionHandlerFeature>()?.Error;
+            if (ex == null)
+            {
+                return;
+            }
 
-        await httpContext.Response.WriteAsync(JsonConvert.SerializeObject(error));
+            var error = new ApiError();
+            if (_environment.IsDevelopment())
+            {
+                error.Message = ex.Message;
+                error.Detail = ex.StackTrace;
+                //error.InnerException = ex.InnerException != null ? ex.InnerException.Message : string.Empty;
+            }
+            else
+            {
+                error.Message = DefaultErrorMessage;
+                error.Detail = ex.Message;
+            }
+
+            httpContext.Response.ContentType = "application/json";
+
+            await httpContext.Response.WriteAsync(JsonConvert.SerializeObject(error));
+        }
     }
 }
